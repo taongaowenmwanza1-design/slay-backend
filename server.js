@@ -55,7 +55,10 @@ const pool = new Pool({
     password: process.env.DB_PASSWORD || 'aaznawmm',
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'postgres'
+    database: process.env.DB_NAME || 'postgres',
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 pool.query('SELECT NOW()').then(() => console.log('Database connected')).catch(err => console.error('DB error:', err.message));
