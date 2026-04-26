@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://guileless-tapioca-ea1e4d.netlify.app'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://glittery-concha-5a71f9.netlify.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'x-admin-key']
 }));
@@ -56,9 +56,7 @@ const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME || 'postgres',
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 pool.query('SELECT NOW()').then(() => console.log('Database connected')).catch(err => console.error('DB error:', err.message));
@@ -69,8 +67,6 @@ function adminAuth(req, res, next) {
     if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(403).json({ error: 'Access denied' });
     next();
 }
-
-// ===== PUBLIC ROUTES =====
 
 app.get('/api/products', async (req, res) => {
     try {
@@ -87,7 +83,6 @@ app.get('/api/products/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Place order
 app.post('/api/orders', async (req, res) => {
     try {
         const { customer_name, customer_phone, customer_email, items, total_amount, payment_method } = req.body;
@@ -100,7 +95,6 @@ app.post('/api/orders', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Layby request
 app.post('/api/layby', async (req, res) => {
     try {
         const { customer_name, customer_phone, customer_email, product_id, product_name, total_price, deposit_percent, duration_months } = req.body;
@@ -115,22 +109,17 @@ app.post('/api/layby', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// ===== ADMIN ROUTES =====
-
-// Upload single image
 app.post('/api/admin/upload', adminAuth, upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No image' });
-    res.json({ image_url: `http://localhost:5000/uploads/${req.file.filename}` });
+    res.json({ image_url: `https://slay-essentials-api.onrender.com/uploads/${req.file.filename}` });
 });
 
-// Upload multiple gallery images
 app.post('/api/admin/upload-gallery', adminAuth, upload.array('images', 10), (req, res) => {
     if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No images' });
-    const urls = req.files.map(f => `http://localhost:5000/uploads/${f.filename}`);
+    const urls = req.files.map(f => `https://slay-essentials-api.onrender.com/uploads/${f.filename}`);
     res.json({ image_urls: urls });
 });
 
-// Add product
 app.post('/api/admin/products', adminAuth, async (req, res) => {
     try {
         const { name, category, price, description, image_url, gallery_images } = req.body;
@@ -142,7 +131,6 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Update product
 app.put('/api/admin/products/:id', adminAuth, async (req, res) => {
     try {
         const { name, category, price, description, image_url, gallery_images, in_stock } = req.body;
@@ -155,7 +143,6 @@ app.put('/api/admin/products/:id', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Delete product
 app.delete('/api/admin/products/:id', adminAuth, async (req, res) => {
     try {
         const result = await pool.query('DELETE FROM products WHERE id=$1 RETURNING *', [req.params.id]);
@@ -164,7 +151,6 @@ app.delete('/api/admin/products/:id', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Get all orders
 app.get('/api/admin/orders', adminAuth, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
@@ -172,7 +158,6 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Update order status
 app.put('/api/admin/orders/:id', adminAuth, async (req, res) => {
     try {
         const { payment_status, order_status } = req.body;
@@ -184,7 +169,6 @@ app.put('/api/admin/orders/:id', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Get all layby
 app.get('/api/admin/layby', adminAuth, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM layby ORDER BY created_at DESC');
@@ -192,7 +176,6 @@ app.get('/api/admin/layby', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Update layby status
 app.put('/api/admin/layby/:id', adminAuth, async (req, res) => {
     try {
         const { status } = req.body;
@@ -201,7 +184,6 @@ app.put('/api/admin/layby/:id', adminAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Create uploads folder
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
